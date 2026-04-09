@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>ChillEscape • Santa Rosa coffee escapes</title>
+  <!-- Tailwind + Font Awesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+  <style>
+    /* smooth transitions & custom dark mode handling */
+    html { transition: background-color 0.2s, color 0.2s; }
+    /* custom modal backdrop */
+    .modal-backdrop { background-color: rgba(0,0,0,0.4); backdrop-filter: blur(3px); }
+    /* coffee shop card hover effect */
+    .shop-card { transition: transform 0.15s, box-shadow 0.2s; }
+    .shop-card:hover { transform: translateY(-3px); box-shadow: 0 12px 24px -8px rgba(0,0,0,0.12); }
+    /* dark mode overrides for nicer contrast */
+    .dark .shop-card { background-color: #1e1e1e; border-color: #3a3a3a; }
+    .dark .modal-content { background-color: #1f1f1f; color: #eee; border: 1px solid #3a3a3a; }
+    .dark input, .dark select { background-color: #2a2a2a; border-color: #4a4a4a; color: #eee; }
+    .dark input::placeholder { color: #9ca3af; }
+  </style>
+</head>
+<body class="bg-[#fbf7f2] text-gray-800 font-sans antialiased dark:bg-[#121212] dark:text-gray-200">
+
+<!-- ========== NAVBAR ========== -->
+<nav class="sticky top-0 z-30 bg-white/80 dark:bg-[#1e1e1e]/90 backdrop-blur-sm border-b border-amber-100 dark:border-gray-700 shadow-sm px-4 md:px-8 py-3">
+  <div class="max-w-7xl mx-auto flex items-center justify-between">
+    <!-- left: icon + brand -->
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 bg-amber-700 rounded-lg flex items-center justify-center shadow-sm">
+        <i class="fa-solid fa-mug-hot text-white text-lg"></i>
+      </div>
+      <span class="text-2xl font-semibold tracking-tight text-amber-900 dark:text-amber-200">ChillEscape</span>
+    </div>
+
+    <!-- right: dark mode dropdown -->
+    <div class="relative" id="themeDropdownWrapper">
+      <button id="themeDropdownBtn" class="flex items-center gap-2 bg-amber-50 dark:bg-gray-800 px-4 py-2 rounded-full border border-amber-200 dark:border-gray-600 text-sm font-medium shadow-sm hover:bg-amber-100 dark:hover:bg-gray-700 transition">
+        <i id="themeIcon" class="fa-regular fa-sun text-amber-600 dark:text-amber-300"></i>
+        <span class="hidden sm:inline">Theme</span>
+        <i class="fa-solid fa-chevron-down text-xs ml-1"></i>
+      </button>
+      <!-- dropdown menu -->
+      <div id="themeDropdown" class="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-amber-100 dark:border-gray-600 overflow-hidden hidden z-50">
+        <button data-theme="light" class="theme-option w-full text-left px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-gray-700 flex items-center gap-3 text-sm">
+          <i class="fa-regular fa-sun text-amber-500 w-5"></i> Light
+        </button>
+        <button data-theme="dark" class="theme-option w-full text-left px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-gray-700 flex items-center gap-3 text-sm">
+          <i class="fa-regular fa-moon text-indigo-400 w-5"></i> Dark
+        </button>
+        <button data-theme="system" class="theme-option w-full text-left px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-gray-700 flex items-center gap-3 text-sm">
+          <i class="fa-solid fa-display text-gray-500 w-5"></i> System
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ========== MAIN CONTENT ========== -->
+<main class="max-w-7xl mx-auto px-4 md:px-6 py-8">
+  
+  <!-- FILTER SECTION (top) -->
+  <div class="mb-10 bg-white/70 dark:bg-[#1a1a1a]/80 backdrop-blur-sm p-5 rounded-2xl border border-amber-100 dark:border-gray-700 shadow-sm">
+    <div class="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+      <!-- search bar -->
+      <div class="flex-grow relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-amber-500 dark:text-amber-400"></i>
+        <input type="text" id="searchInput" placeholder="Find a coffee shop..." 
+               class="w-full pl-11 pr-4 py-3 rounded-xl border border-amber-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-amber-400 outline-none transition text-base">
+      </div>
+      <!-- filter type dropdown -->
+      <div class="relative min-w-[180px]">
+        <select id="filterTypeSelect" class="w-full appearance-none pl-4 pr-10 py-3 rounded-xl border border-amber-200 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-amber-400 outline-none cursor-pointer text-base">
+          <option value="all">☕ All cafes</option>
+          <option value="unli-wifi">📶 Unli Wifi</option>
+          <option value="limited-wifi">⏳ Limited Wifi</option>
+          <option value="no-wifi">🚫 No Internet</option>
+          <option value="outlet">🔌 With power outlet</option>
+          <option value="no-outlet">⚡ No power outlet</option>
+        </select>
+        <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-amber-600 dark:text-amber-400 pointer-events-none"></i>
+      </div>
+    </div>
+    <p class="text-xs text-gray-500 dark:text-gray-400 mt-3 ml-1 flex items-center gap-1">
+      <i class="fa-regular fa-compass"></i> Santa Rosa City, Laguna • curated chill spots
+    </p>
+  </div>
+
+  <!-- COFFEE SHOP CARDS (list) -->
+  <div id="cardsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 transition-all">
+    <!-- Cards will be injected via JS -->
+  </div>
+  
+  <!-- empty state message (hidden by default) -->
+  <div id="emptyState" class="hidden text-center py-16 px-4 bg-amber-50/50 dark:bg-gray-800/30 rounded-3xl mt-8">
+    <i class="fa-solid fa-map-location-dot text-5xl text-amber-300 dark:text-amber-600 mb-4"></i>
+    <h3 class="text-xl font-medium">No matching cafes</h3>
+    <p class="text-gray-500 dark:text-gray-400 mt-1">Try adjusting your search or filter</p>
+  </div>
+</main>
+
+<!-- ========== MODALS ========== -->
+<!-- View Menu Modal -->
+<div id="menuModal" class="fixed inset-0 flex items-center justify-center z-50 hidden transition-all">
+  <div class="modal-backdrop absolute inset-0" id="menuBackdrop"></div>
+  <div class="modal-content relative bg-white dark:bg-gray-800 w-full max-w-md mx-4 rounded-2xl shadow-2xl p-6 border border-amber-100 dark:border-gray-600 max-h-[80vh] overflow-y-auto">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-xl font-bold flex items-center gap-2"><i class="fa-solid fa-mug-saucer text-amber-700"></i> <span id="menuShopName">Menu</span></h3>
+      <button class="close-modal text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl">&times;</button>
+    </div>
+    <div id="menuContent" class="space-y-3 text-sm">
+      <!-- dynamic menu items -->
+    </div>
+    <div class="mt-5 text-right">
+      <button class="close-modal px-5 py-2 bg-amber-100 dark:bg-gray-700 rounded-full text-sm font-medium hover:bg-amber-200 dark:hover:bg-gray-600">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- View Direction Modal (location) -->
+<div id="directionModal" class="fixed inset-0 flex items-center justify-center z-50 hidden">
+  <div class="modal-backdrop absolute inset-0" id="directionBackdrop"></div>
+  <div class="modal-content relative bg-white dark:bg-gray-800 w-full max-w-lg mx-4 rounded-2xl shadow-2xl p-5 border border-amber-100 dark:border-gray-600">
+    <div class="flex justify-between items-center mb-3">
+      <h3 class="text-lg font-semibold flex items-center gap-2"><i class="fa-solid fa-location-dot text-red-500"></i> <span id="directionShopName">Directions</span></h3>
+      <button class="close-direction text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-2xl">&times;</button>
+    </div>
+    <div class="bg-amber-50 dark:bg-gray-700/50 rounded-xl p-4 mb-3">
+      <p class="text-sm font-medium flex items-center gap-1"><i class="fa-regular fa-building"></i> <span id="directionAddress">Santa Rosa City, Laguna</span></p>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Default location — Santa Rosa, Laguna</p>
+    </div>
+    <!-- map placeholder (minimalist) -->
+    <div class="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600 h-48 bg-amber-100/30 dark:bg-gray-700 flex items-center justify-center">
+      <div class="text-center">
+        <i class="fa-solid fa-map-location-dot text-4xl text-amber-600 dark:text-amber-400 mb-2"></i>
+        <p class="font-medium text-gray-700 dark:text-gray-300">📍 Santa Rosa · Laguna</p>
+        <p class="text-xs text-gray-500 mt-1">(Interactive map placeholder)</p>
+      </div>
+    </div>
+    <div class="mt-5 flex justify-end gap-3">
+      <button class="close-direction px-5 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-600">Close</button>
+      <button class="px-5 py-2 bg-amber-700 text-white rounded-full text-sm font-medium hover:bg-amber-800 shadow-sm"><i class="fa-regular fa-compass mr-1"></i> Open in Maps</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function(){
+    "use strict";
+
+    // ---------- DATA: 5 coffee shops (Santa Rosa) ----------
+    const shopsData = [
+      {
+        id: 1,
+        name: "Kape Santa Rosa",
+        image: "https://picsum.photos/id/30/400/280",     // coffee
+        address: "Paseo de Santa Rosa, Laguna",
+        hours: "8:00 AM – 10:00 PM",
+        wifi: "Unli Wifi",
+        wifiType: "unli",
+        hasOutlet: true,
+        menu: ["☕ Spanish Latte - ₱140", "🍵 Matcha - ₱150", "🥐 Croissant - ₱90", "🍰 Cheesecake - ₱180"]
+      },
+      {
+        id: 2,
+        name: "The Brew Library",
+        image: "https://picsum.photos/id/42/400/280",     // coffee setup
+        address: "Balibago, Santa Rosa",
+        hours: "10:00 AM – 8:00 PM",
+        wifi: "Limited (2 hrs only)",
+        wifiType: "limited",
+        hasOutlet: true,
+        menu: ["📚 Flat White - ₱160", "☕ Pour Over - ₱180", "🥪 Grilled Cheese - ₱130", "📖 Book-themed pastries"]
+      },
+      {
+        id: 3,
+        name: "Cafeño Hideout",
+        image: "https://picsum.photos/id/48/400/280",     // latte art
+        address: "Sta. Rosa - Tagaytay Rd",
+        hours: "7:30 AM – 11:00 PM",
+        wifi: "Unli Wifi",
+        wifiType: "unli",
+        hasOutlet: false,
+        menu: ["☕ Caramel Macchiato - ₱155", "🧊 Iced Americano - ₱120", "🍞 Banana Bread - ₱95"]
+      },
+      {
+        id: 4,
+        name: "Bean & Brew Lab",
+        image: "https://picsum.photos/id/60/400/280",     // workspace coffee
+        address: "Nuvali, Santa Rosa",
+        hours: "9:00 AM – 9:00 PM",
+        wifi: "No Internet",
+        wifiType: "no",
+        hasOutlet: true,
+        menu: ["🧪 Nitro Cold Brew - ₱190", "☕ Cortado - ₱140", "🥐 Almond Croissant - ₱110"]
+      },
+      {
+        id: 5,
+        name: "Sunset Grind",
+        image: "https://picsum.photos/id/88/400/280",     // coffee + window
+        address: "E. Rodriguez Ave, Santa Rosa",
+        hours: "11:00 AM – 12:00 AM",
+        wifi: "Limited (2 hrs only)",
+        wifiType: "limited",
+        hasOutlet: false,
+        menu: ["🌅 Sunset Latte - ₱165", "☕ Cold Brew - ₱150", "🍪 Cookies - ₱80", "🥗 Quinoa Bowl - ₱210"]
+      }
+    ];
+
+    // DOM elements
+    const container = document.getElementById('cardsContainer');
+    const emptyState = document.getElementById('emptyState');
+    const searchInput = document.getElementById('searchInput');
+    const filterSelect = document.getElementById('filterTypeSelect');
+
+    // Modals
+    const menuModal = document.getElementById('menuModal');
+    const directionModal = document.getElementById('directionModal');
+    const menuShopNameSpan = document.getElementById('menuShopName');
+    const menuContentDiv = document.getElementById('menuContent');
+    const directionShopNameSpan = document.getElementById('directionShopName');
+    const directionAddressSpan = document.getElementById('directionAddress');
+
+    // Dark mode elements
+    const themeBtn = document.getElementById('themeDropdownBtn');
+    const themeDropdown = document.getElementById('themeDropdown');
+    const themeIcon = document.getElementById('themeIcon');
+    const htmlEl = document.documentElement;
+
+    // ---------- RENDER CARDS ----------
+    function renderCards(filteredShops) {
+      if (!filteredShops || filteredShops.length === 0) {
+        container.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+      emptyState.classList.add('hidden');
+      
+      let html = '';
+      filteredShops.forEach(shop => {
+        // wifi status display
+        let wifiDisplay = '';
+        if (shop.wifi === 'Unli Wifi') wifiDisplay = '<span class="text-emerald-700 dark:text-emerald-400 font-medium"><i class="fa-solid fa-wifi mr-1"></i>Unli Wifi</span>';
+        else if (shop.wifi.includes('Limited')) wifiDisplay = '<span class="text-amber-600 dark:text-amber-400 font-medium"><i class="fa-solid fa-wifi mr-1"></i>Limited (2h)</span>';
+        else wifiDisplay = '<span class="text-rose-500 dark:text-rose-400 font-medium"><i class="fa-solid fa-wifi-slash mr-1"></i>No Internet</span>';
+        
+        const outletDisplay = shop.hasOutlet 
+          ? '<span class="text-emerald-700 dark:text-emerald-400"><i class="fa-solid fa-bolt mr-1"></i>Power Outlet</span>' 
+          : '<span class="text-gray-500 dark:text-gray-400"><i class="fa-solid fa-bolt mr-1"></i>No outlet</span>';
+        
+        html += `
+          <div class="shop-card bg-white dark:bg-[#1e1e1e] rounded-2xl shadow-md border border-amber-100 dark:border-gray-700 overflow-hidden flex flex-col h-full transition-all">
+            <div class="h-44 w-full overflow-hidden bg-amber-50 dark:bg-gray-800">
+              <img src="${shop.image}" alt="${shop.name}" class="w-full h-full object-cover hover:scale-105 transition duration-300">
+            </div>
+            <div class="p-4 flex flex-col flex-grow">
+              <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100">${shop.name}</h3>
+              
+              <!-- location + view direction (clickable) -->
+              <div class="flex items-center gap-2 mt-1 text-sm text-gray-600 dark:text-gray-300">
+                <i class="fa-solid fa-location-dot text-red-400 text-xs"></i>
+                <span class="truncate">${shop.address}</span>
+                <button class="view-direction-btn ml-auto text-amber-700 dark:text-amber-400 text-xs font-medium hover:underline flex items-center gap-1" data-shop-id="${shop.id}" data-shop-name="${shop.name}" data-shop-address="${shop.address}">
+                  <i class="fa-regular fa-compass"></i> View Direction
+                </button>
+              </div>
+              
+              <!-- hours (clock) -->
+              <div class="flex items-center gap-2 mt-2 text-sm text-gray-700 dark:text-gray-300">
+                <i class="fa-regular fa-clock text-amber-600 dark:text-amber-400 w-4"></i>
+                <span>${shop.hours}</span>
+              </div>
+              
+              <!-- wifi + outlet row -->
+              <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-sm">
+                <div>${wifiDisplay}</div>
+                <div>${outletDisplay}</div>
+              </div>
+              
+              <!-- bottom button: View Menu (right side) -->
+              <div class="mt-4 flex justify-end">
+                <button class="view-menu-btn bg-amber-100 dark:bg-amber-900/40 hover:bg-amber-200 dark:hover:bg-amber-800/60 text-amber-900 dark:text-amber-200 px-5 py-2 rounded-full text-sm font-medium flex items-center gap-1 transition shadow-sm" data-shop-id="${shop.id}" data-shop-name="${shop.name}">
+                  <i class="fa-regular fa-rectangle-list"></i> View Menu
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    // ---------- FILTER LOGIC ----------
+    function filterShops() {
+      const searchTerm = searchInput.value.trim().toLowerCase();
+      const filterValue = filterSelect.value;
+      
+      let filtered = shopsData.filter(shop => {
+        // name search
+        if (searchTerm && !shop.name.toLowerCase().includes(searchTerm)) return false;
+        
+        // filter type
+        if (filterValue === 'all') return true;
+        if (filterValue === 'unli-wifi' && shop.wifiType !== 'unli') return false;
+        if (filterValue === 'limited-wifi' && shop.wifiType !== 'limited') return false;
+        if (filterValue === 'no-wifi' && shop.wifiType !== 'no') return false;
+        if (filterValue === 'outlet' && !shop.hasOutlet) return false;
+        if (filterValue === 'no-outlet' && shop.hasOutlet) return false;
+        return true;
+      });
+      
+      renderCards(filtered);
+    }
+
+    // attach event listeners after rendering (delegation)
+    function attachCardEvents() {
+      // View Menu
+      document.querySelectorAll('.view-menu-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const shopId = parseInt(btn.dataset.shopId);
+          const shop = shopsData.find(s => s.id === shopId);
+          if (!shop) return;
+          
+          menuShopNameSpan.textContent = shop.name;
+          // fill menu items
+          let menuHtml = '';
+          shop.menu.forEach(item => { menuHtml += `<div class="flex items-center gap-2 border-b border-amber-100 dark:border-gray-700 py-2"><i class="fa-regular fa-mug-saucer text-amber-600 w-5"></i>${item}</div>`; });
+          menuContentDiv.innerHTML = menuHtml || '<p class="text-gray-500">Menu coming soon</p>';
+          menuModal.classList.remove('hidden');
+        });
+      });
+      
+      // View Direction
+      document.querySelectorAll('.view-direction-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const shopName = btn.dataset.shopName;
+          const address = btn.dataset.shopAddress || 'Santa Rosa City, Laguna';
+          directionShopNameSpan.textContent = shopName;
+          directionAddressSpan.textContent = address;
+          directionModal.classList.remove('hidden');
+        });
+      });
+    }
+
+    // observe container changes to attach events
+    const observer = new MutationObserver(() => attachCardEvents());
+    observer.observe(container, { childList: true, subtree: false });
+
+    // initial render
+    renderCards(shopsData);
+    attachCardEvents();
+
+    // filter listeners
+    searchInput.addEventListener('input', filterShops);
+    filterSelect.addEventListener('change', filterShops);
+
+    // ---------- MODAL CLOSE LOGIC ----------
+    function closeMenuModal() { menuModal.classList.add('hidden'); }
+    function closeDirectionModal() { directionModal.classList.add('hidden'); }
+    
+    document.querySelectorAll('.close-modal').forEach(btn => btn.addEventListener('click', closeMenuModal));
+    document.querySelectorAll('.close-direction').forEach(btn => btn.addEventListener('click', closeDirectionModal));
+    document.getElementById('menuBackdrop').addEventListener('click', closeMenuModal);
+    document.getElementById('directionBackdrop').addEventListener('click', closeDirectionModal);
+    
+    // escape key
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (!menuModal.classList.contains('hidden')) closeMenuModal();
+        if (!directionModal.classList.contains('hidden')) closeDirectionModal();
+      }
+    });
+
+    // ---------- DARK MODE DROPDOWN (working) ----------
+    const themeOptions = document.querySelectorAll('.theme-option');
+    
+    function setTheme(theme) {
+      if (theme === 'dark') {
+        htmlEl.classList.add('dark');
+        themeIcon.className = 'fa-regular fa-moon text-indigo-400';
+        localStorage.setItem('theme', 'dark');
+      } else if (theme === 'light') {
+        htmlEl.classList.remove('dark');
+        themeIcon.className = 'fa-regular fa-sun text-amber-600';
+        localStorage.setItem('theme', 'light');
+      } else { // system
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (prefersDark) {
+          htmlEl.classList.add('dark');
+          themeIcon.className = 'fa-regular fa-moon text-indigo-400';
+        } else {
+          htmlEl.classList.remove('dark');
+          themeIcon.className = 'fa-regular fa-sun text-amber-600';
+        }
+        localStorage.setItem('theme', 'system');
+      }
+    }
+    
+    // load saved theme
+    const savedTheme = localStorage.getItem('theme') || 'system';
+    setTheme(savedTheme);
+    
+    themeOptions.forEach(opt => {
+      opt.addEventListener('click', (e) => {
+        const selected = opt.dataset.theme;
+        setTheme(selected);
+        themeDropdown.classList.add('hidden');
+      });
+    });
+    
+    // dropdown toggle
+    themeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      themeDropdown.classList.toggle('hidden');
+    });
+    
+    window.addEventListener('click', (e) => {
+      if (!themeBtn.contains(e.target) && !themeDropdown.contains(e.target)) {
+        themeDropdown.classList.add('hidden');
+      }
+    });
+    
+    // system theme listener (live)
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if (localStorage.getItem('theme') === 'system') setTheme('system');
+    });
+
+    // minor: "Open in Maps" button dummy alert (Santa Rosa default)
+    document.querySelector('.close-direction + button')?.addEventListener('click', () => {
+      alert('📍 Opening maps for Santa Rosa City, Laguna (demo)');
+    });
+
+  })();
+</script>
+<!-- small extra style for smoother dark mode -->
+</body>
+</html>
